@@ -28,3 +28,7 @@ npm run lint
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
 "# innopolis_heatnap" 
+
+
+### Тестовая версия доступна 
+### https://taskinnopolis.000webhostapp.com/

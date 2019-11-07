@@ -12,6 +12,7 @@ export class CanvasClass {
     constructor(map) {
         this.map = map;
         this.xyArray = [];
+        
         this.con_height = parseInt(map.container.getElement().style.height, 10);
         this.con_width = parseInt(map.container.getElement().style.width, 10);
 
@@ -26,13 +27,40 @@ export class CanvasClass {
         }
     }
 
-    showHeatMap() {
-        this.getPointsTemperature(7);
-        this.getAllValuesForPointsTemperature(this.xyArray);
+    resizeValuesForMinMax() {
+        let newValues = []
+        for (let value of this.xyArray) {
+            newValues.push(value.value);
+        }
+
+        newValues.sort((a, b) => a - b);
+        let maxValue = Math.max.apply(null, newValues);
+        let minValue = Math.min.apply(null, newValues);
+        let midValue = (maxValue + minValue) / 2;
+        let koef = 50 / (maxValue - midValue);
+        for (let i = 0; i < this.xyArray.length; i++) {
+            this.xyArray[i].realValue = this.xyArray[i].value;
+            this.xyArray[i].value = (this.xyArray[i].value - midValue) * koef;
+        }
+        this.ValuesSort = {
+            maxValue: maxValue,
+            minValue: minValue,
+            midValue: midValue,
+            koef: koef
+        }
+
     }
+
+    async showHeatMap() {
+        this.getPointsTemperature(5);
+
+       await this.getAllValuesForPointsTemperature(this.xyArray);
+    }
+
     drawCanvas() {
+
         if (this.geoObjects) {
-            this.map.geoObjects.remove (this.geoObjects);
+            this.map.geoObjects.remove(this.geoObjects);
         }
         // добавляем канвас в нужное место
         var element = document.createElement('canvas');
@@ -50,27 +78,26 @@ export class CanvasClass {
 
 
 
-        var ctx0 = canvas.getContext("2d"); 
-        var drw0 = new TemperatureMap(ctx0);  
+        var ctx0 = canvas.getContext("2d");
+        var drw0 = new TemperatureMap(ctx0);
         drw0.setPoints(this.xyArray, this.con_width, this.con_height);
-        drw0.drawLow(10, 30, true, function () { 
-        drw0.drawPoints(); 
+        drw0.drawLow(10, 30, true, function () {
+            drw0.drawPoints();
         });
-        
+
         let oGrayImg = canvas.toDataURL('image/png');
 
         let myGeoObject = new ymaps.GeoObject({
             geometry: {
                 type: 'Rectangle',
                 coordinates: [
-                    
-                    [this.xyArray[this.xyArray.length-1].coords[0], this.xyArray[this.xyArray.length-1].coords[1]],
+
+                    [this.xyArray[this.xyArray.length - 1].coords[0], this.xyArray[this.xyArray.length - 1].coords[1]],
                     [this.xyArray[0].coords[0], this.xyArray[0].coords[1]]
                 ]
             },
             // Свойства.
-            properties: {            
-            }
+            properties: {}
         }, {
             draggable: false,
             fillImageHref: oGrayImg,
@@ -80,11 +107,13 @@ export class CanvasClass {
 
         this.map.geoObjects.add(myGeoObject);
         this.geoObjects = myGeoObject;
-        
+
         element.style.display = 'none';
-        
+
 
     }
+
+
 
 
     async getAllValuesForPointsTemperature(arr) {
@@ -92,9 +121,9 @@ export class CanvasClass {
         for (let i = 0; i < arr.length; i++) {
             tempCoords.lat = arr[i].coords[0];
             tempCoords.lon = arr[i].coords[1];
-            let promise = await this.getTemperature(tempCoords);
-            this.xyArray[i].value = promise;
+            this.xyArray[i].value = await this.getTemperature(tempCoords);
         }
+        this.resizeValuesForMinMax();
         this.drawCanvas();
     }
 
@@ -103,7 +132,7 @@ export class CanvasClass {
         if (quality < 2) quality = 2;
         let yQuality = quality;
         let xQuality = quality;
-        
+
         let xyArray = [];
         let yAxis, tempPoindsCoords;
         let projection = this.map.options.get('projection');
@@ -136,11 +165,11 @@ export class CanvasClass {
                 crossDomain: true
             });
             let temp = response.data.main.temp;
-            if (temp > -30 && temp < 70){
-                temp *= 2; 
-            }
-            if (temp < -30) return -30;
-            if (temp > 70) return 70;
+            /*             if (temp > -30 && temp < 70){
+                            temp *= 2; 
+                        }
+                        if (temp < -30) return -30;
+                        if (temp > 70) return 70; */
             return temp;
         } catch (error) {
             console.error(error);

@@ -106,7 +106,7 @@ TemperatureMap.prototype.getColor = function (levels, value) {
     var val = value,
         tmp = 0,
         lim = 0.55,
-        min = -30,
+        min = -50,
         max = 50,
         dif = max - min,
         lvs = 25;
@@ -142,6 +142,8 @@ TemperatureMap.prototype.getPointValue = function (limit, point) {
     // From : https://en.wikipedia.org/wiki/Inverse_distance_weighting
 
     if (TemperatureMap.pointInPolygon(point, this.polygon)) {
+ 
+
 
         for (counter = 0; counter < this.points.length; counter = counter + 1) {
             dis = TemperatureMap.squareDistance(point, this.points[counter]);
@@ -204,7 +206,6 @@ TemperatureMap.prototype.setConvexhullPolygon = function (points) {
         }
         upper.push(points[i]);
     }
-
     upper.pop();
     lower.pop();
     this.polygon = lower.concat(upper);
@@ -267,7 +268,6 @@ TemperatureMap.prototype.drawLow = function (limit, res, clean, callback) {
         yEnd = self.limits.yMax,
         lim = limit > self.points.length ? self.points.length : limit + 1,
         gradient;
-
     ctx.clearRect(0, 0, this.size.width, this.size.height);
     ctx.width += 0; //<=== Resizing the canvas will cause the canvas to get cleared.
 
